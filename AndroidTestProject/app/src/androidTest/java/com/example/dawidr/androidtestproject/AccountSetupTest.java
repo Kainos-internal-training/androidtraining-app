@@ -26,21 +26,42 @@ public class AccountSetupTest extends ActivityInstrumentationTestCase2<AccountSe
         btnContinue = (Button) accountSetupActivity.findViewById(R.id.btnContinue);
     }
 
-    public void test_validate() {
+    public void test_validate_two_fields_empty() {
         accountSetupActivity.runOnUiThread(new Runnable() {
             public void run() {
 
                 etUserName.setText("");
                 etEmail.setText("");
                 assertEquals(btnContinue.isEnabled(), false);
+            }
+        });
+    }
 
-                etUserName.setText("something");
-                etEmail.setText("");
-                assertEquals(btnContinue.isEnabled(), false);
+    public void test_validate_first_field_empty() {
+        accountSetupActivity.runOnUiThread(new Runnable() {
+            public void run() {
 
                 etUserName.setText("");
                 etEmail.setText("something");
                 assertEquals(btnContinue.isEnabled(), false);
+            }
+        });
+    }
+
+    public void test_validate_second_field_empty() {
+        accountSetupActivity.runOnUiThread(new Runnable() {
+            public void run() {
+
+                etUserName.setText("something");
+                etEmail.setText("");
+                assertEquals(btnContinue.isEnabled(), false);
+            }
+        });
+    }
+
+    public void test_validate_both_fields_filled() {
+        accountSetupActivity.runOnUiThread(new Runnable() {
+            public void run() {
 
                 etUserName.setText("something");
                 etEmail.setText("something");
