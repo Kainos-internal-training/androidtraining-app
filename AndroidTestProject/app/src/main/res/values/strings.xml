@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AndroidTestProject</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+
+    <string name="app_name">Android Test Project</string>
+    <string name="action_new">New</string>
     <string name="title_activity_splash_screen">SplashScreenActivity</string>
     <string name="title_activity_account_setup">Account Setup</string>
     <string name="user_name">User name:</string>
     <string name="email">E-mail:</string>
-    <string name="save">Save</string>
+    <string name="action_save">Save</string>
     <string name="cont">Continue</string>
+    <string name="title_activity_work_item">WorkItemActivity</string>
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="is_first_run">is_first_run</string>
+    <string name="preferences_name">com.example.dawidr.androidtestproject</string>
+
 </resources>
