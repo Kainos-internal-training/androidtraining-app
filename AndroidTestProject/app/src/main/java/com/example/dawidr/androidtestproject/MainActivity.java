@@ -10,7 +10,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -82,8 +81,7 @@ public class MainActivity extends ListActivity {
                 convertView = inflater.inflate(R.layout.list_item, parent, false);
             }
 
-            TextView text = (TextView) convertView.findViewById(R.id.deal_title);
-            ImageView image = (ImageView) convertView.findViewById(R.id.deal_img);
+            TextView text = (TextView) convertView.findViewById(R.id.tvTitle);
 
             WorkItem item = getItem(position);
 
