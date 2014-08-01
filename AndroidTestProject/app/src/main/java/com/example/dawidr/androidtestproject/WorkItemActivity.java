@@ -5,6 +5,9 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -12,7 +15,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
+import com.example.dawidr.androidtestproject.Database.Model.WorkPhoto;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
 
 public class WorkItemActivity extends Activity {
@@ -22,6 +29,8 @@ public class WorkItemActivity extends Activity {
     private ViewPager mViewPager;
     private WorkItemPhotosFragment workItemPhotosFragment;
     private WorkItemDetailsFragment workItemDetailsFragment;
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private WorkItem workItem = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,19 +39,21 @@ public class WorkItemActivity extends Activity {
 
         app = (App) getApplication();
         final ActionBar actionBar = getActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        if (actionBar != null)
+            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
         mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
 
         if (this.getIntent().hasExtra("content")) {
-            WorkItem workItem = (WorkItem) this.getIntent().getSerializableExtra("content");
-
-            workItemPhotosFragment = new WorkItemPhotosFragment(workItem);
-            workItemDetailsFragment = new WorkItemDetailsFragment(workItem);
+            workItem = (WorkItem) this.getIntent().getSerializableExtra("content");
         } else {
-            workItemPhotosFragment = new WorkItemPhotosFragment();
-            workItemDetailsFragment = new WorkItemDetailsFragment();
+            workItem = new WorkItem();
+            workItem.photos = new ArrayList<WorkPhoto>();
         }
+
+        workItemPhotosFragment = new WorkItemPhotosFragment(workItem);
+        workItemDetailsFragment = new WorkItemDetailsFragment(workItem);
 
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -89,18 +100,12 @@ public class WorkItemActivity extends Activity {
         int id = item.getItemId();
         if (id == R.id.action_save) {
 
+            FillEntity(workItem);
             if (this.getIntent().hasExtra("content")) {
-                WorkItem workItem = (WorkItem) this.getIntent().getSerializableExtra("content");
-                FillEntityFromLayout(workItem);
-
                 app.dataManager.updateWorkItem(workItem);
             } else {
-                WorkItem workItem = new WorkItem();
-                FillEntityFromLayout(workItem);
-
-                app.dataManager.saveWorkItem(workItem);
+                app.dataManager.insertWorkItem(workItem);
             }
-
             finish();
 
             return true;
@@ -108,9 +113,23 @@ public class WorkItemActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    void FillEntityFromLayout(WorkItem workItem) {
+    void FillEntity(WorkItem workItem) {
         workItem.title = workItemDetailsFragment.etTitle.getText().toString();
-        workItem.current_date = workItemDetailsFragment.etCurrentDate.getText().toString();
+
+        //Current date
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        workItem.current_date = df.format(Calendar.getInstance().getTime());
+
+        //GPS coordinates
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (location != null) {
+            workItem.gps_longitude = location.getLongitude();
+            workItem.gps_latitude = location.getLatitude();
+        }
+
+        //Type
+        workItem.type = workItemDetailsFragment.spTypes.getSelectedItemPosition();
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {

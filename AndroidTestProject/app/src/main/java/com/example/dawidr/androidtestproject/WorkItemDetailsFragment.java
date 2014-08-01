@@ -6,13 +6,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
 
 public class WorkItemDetailsFragment extends Fragment {
 
     public EditText etTitle;
-    public EditText etCurrentDate;
+    public Spinner spTypes;
     private WorkItem workItem = null;
 
     public WorkItemDetailsFragment() {
@@ -29,15 +30,10 @@ public class WorkItemDetailsFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_work_item_details, container, false);
 
         etTitle = (EditText) rootView.findViewById(R.id.etTitle);
-        etCurrentDate = (EditText) rootView.findViewById(R.id.etCurrentDate);
+        spTypes = (Spinner) rootView.findViewById(R.id.spTypes);
 
-        if (workItem != null) {
-
-            etTitle.setText(workItem.title);
-            etCurrentDate.setText(workItem.current_date);
-
-            workItem = null;
-        }
+        etTitle.setText(workItem.title);
+        spTypes.setSelection(workItem.type);
 
         return rootView;
     }

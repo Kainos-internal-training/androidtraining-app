@@ -12,7 +12,6 @@ import android.widget.EditText;
 
 public class AccountSetupActivity extends Activity {
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +49,6 @@ public class AccountSetupActivity extends Activity {
 
     public void ContinueClick(View view) {
 
-        Button btnContinue = (Button) findViewById(R.id.btnContinue);
         String strUserName = ((EditText) findViewById(R.id.etUserName)).getText().toString();
         String strEmail = ((EditText) findViewById(R.id.etEmail)).getText().toString();
 

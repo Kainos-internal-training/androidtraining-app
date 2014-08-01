@@ -6,12 +6,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.example.dawidr.androidtestproject.Database.Tables.WorkItemTable;
+import com.example.dawidr.androidtestproject.Database.Tables.WorkPhotoTable;
 
 public class OpenHelper extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
 
-    private Context context;
+    private final Context context;
 
     OpenHelper(final Context context) {
         super(context, DataConstants.DATABASE_NAME, null, DATABASE_VERSION);
@@ -36,11 +37,13 @@ public class OpenHelper extends SQLiteOpenHelper {
     public void onCreate(final SQLiteDatabase db) {
 
         WorkItemTable.onCreate(db);
+        WorkPhotoTable.onCreate(db);
     }
 
     @Override
     public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
 
         WorkItemTable.onUpgrade(db, oldVersion, newVersion);
+        WorkPhotoTable.onUpgrade(db, oldVersion, newVersion);
     }
 }

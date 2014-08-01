@@ -16,11 +16,12 @@ import java.util.List;
 public class WorkItemDao implements Dao<WorkItem> {
 
     private static final String INSERT =
-            "insert into " + WorkItemTable.TABLE_NAME + "(" + WorkItemColumns.TITLE + ", " + WorkItemColumns.CURRENT_DATE + ") " +
-                    "values (?, ?)";
+            "insert into " + WorkItemTable.TABLE_NAME + "(" + WorkItemColumns.TITLE + ", " + WorkItemColumns.CURRENT_DATE
+                    + ", " + WorkItemColumns.GPS_LONGITUDE + ", " + WorkItemColumns.GPS_LATITUDE + ", " + WorkItemColumns.TYPE + ") " +
+                    "values (?, ?, ?, ?, ?)";
 
-    private SQLiteDatabase db;
-    private SQLiteStatement insertStatement;
+    private final SQLiteDatabase db;
+    private final SQLiteStatement insertStatement;
 
     public WorkItemDao(SQLiteDatabase db) {
         this.db = db;
@@ -32,6 +33,9 @@ public class WorkItemDao implements Dao<WorkItem> {
         insertStatement.clearBindings();
         insertStatement.bindString(1, entity.title);
         insertStatement.bindString(2, entity.current_date);
+        insertStatement.bindDouble(3, entity.gps_longitude);
+        insertStatement.bindDouble(4, entity.gps_latitude);
+        insertStatement.bindLong(5, entity.type);
         return insertStatement.executeInsert();
     }
 
@@ -40,15 +44,16 @@ public class WorkItemDao implements Dao<WorkItem> {
         final ContentValues values = new ContentValues();
         values.put(WorkItemColumns.TITLE, entity.title);
         values.put(WorkItemColumns.CURRENT_DATE, entity.current_date);
+        values.put(WorkItemColumns.GPS_LONGITUDE, entity.gps_longitude);
+        values.put(WorkItemColumns.GPS_LATITUDE, entity.gps_latitude);
+        values.put(WorkItemColumns.TYPE, entity.type);
         db.update(WorkItemTable.TABLE_NAME, values, BaseColumns._ID + " = ?", new String[]{String
                 .valueOf(entity.id)});
     }
 
     @Override
     public void delete(WorkItem entity) {
-        if (entity.id > 0) {
-            db.delete(WorkItemTable.TABLE_NAME, BaseColumns._ID + " = ?", new String[]{String.valueOf(entity.id)});
-        }
+        db.delete(WorkItemTable.TABLE_NAME, BaseColumns._ID + " = ?", new String[]{String.valueOf(entity.id)});
     }
 
     @Override
@@ -57,7 +62,10 @@ public class WorkItemDao implements Dao<WorkItem> {
         Cursor c =
                 db.query(WorkItemTable.TABLE_NAME, new String[]{BaseColumns._ID,
                                 WorkItemColumns.TITLE,
-                                WorkItemColumns.CURRENT_DATE},
+                                WorkItemColumns.CURRENT_DATE,
+                                WorkItemColumns.GPS_LONGITUDE,
+                                WorkItemColumns.GPS_LATITUDE,
+                                WorkItemColumns.TYPE},
                         BaseColumns._ID + " = ?", new String[]{String.valueOf(id)}, null, null, null, "1"
                 );
         if (c.moveToFirst()) {
@@ -75,7 +83,10 @@ public class WorkItemDao implements Dao<WorkItem> {
         Cursor c =
                 db.query(WorkItemTable.TABLE_NAME, new String[]{BaseColumns._ID,
                                 WorkItemColumns.TITLE,
-                                WorkItemColumns.CURRENT_DATE},
+                                WorkItemColumns.CURRENT_DATE,
+                                WorkItemColumns.GPS_LONGITUDE,
+                                WorkItemColumns.GPS_LATITUDE,
+                                WorkItemColumns.TYPE},
                         null, null, null, null, WorkItemColumns.TITLE, null
                 );
         if (c.moveToFirst()) {
@@ -99,6 +110,9 @@ public class WorkItemDao implements Dao<WorkItem> {
             entity.id = c.getLong(0);
             entity.title = c.getString(1);
             entity.current_date = c.getString(2);
+            entity.gps_longitude = c.getDouble(3);
+            entity.gps_latitude = c.getDouble(4);
+            entity.type = c.getInt(5);
         }
         return entity;
     }
