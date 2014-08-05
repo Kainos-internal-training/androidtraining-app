@@ -8,20 +8,12 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Spinner;
 
-import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
-
 public class WorkItemDetailsFragment extends Fragment {
 
-    public EditText etTitle;
-    public Spinner spTypes;
-    private WorkItem workItem = null;
+    public static EditText etTitle;
+    public static Spinner spTypes;
 
     public WorkItemDetailsFragment() {
-    }
-
-    public WorkItemDetailsFragment(WorkItem w) {
-
-        workItem = w;
     }
 
     @Override
@@ -32,8 +24,10 @@ public class WorkItemDetailsFragment extends Fragment {
         etTitle = (EditText) rootView.findViewById(R.id.etTitle);
         spTypes = (Spinner) rootView.findViewById(R.id.spTypes);
 
-        etTitle.setText(workItem.title);
-        spTypes.setSelection(workItem.type);
+        if (WorkItemActivity.workItem != null) {
+            etTitle.setText(WorkItemActivity.workItem.title);
+            spTypes.setSelection(WorkItemActivity.workItem.type);
+        }
 
         return rootView;
     }

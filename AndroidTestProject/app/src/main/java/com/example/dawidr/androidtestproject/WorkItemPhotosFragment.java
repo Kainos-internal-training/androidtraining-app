@@ -17,7 +17,6 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
 import com.example.dawidr.androidtestproject.Database.Model.WorkPhoto;
 
 import java.io.File;
@@ -26,7 +25,6 @@ import java.util.Date;
 
 public class WorkItemPhotosFragment extends Fragment {
 
-    private WorkItem workItem = null;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private GridView gridView;
     private ImageAdapter imageAdapter;
@@ -34,11 +32,6 @@ public class WorkItemPhotosFragment extends Fragment {
     private String mCurrentPhotoPath;
 
     public WorkItemPhotosFragment() {
-    }
-
-    public WorkItemPhotosFragment(WorkItem w) {
-
-        workItem = w;
     }
 
     @Override
@@ -62,14 +55,14 @@ public class WorkItemPhotosFragment extends Fragment {
                             WorkPhoto workPhoto = new WorkPhoto();
                             workPhoto.path = file.getAbsolutePath();
 
-                            workItem.photos.add(workPhoto);
+                            WorkItemActivity.workItem.photos.add(workPhoto);
                         }
                     }
                 } else {
                     Intent intent = new Intent();
                     intent.setAction(android.content.Intent.ACTION_VIEW);
 
-                    intent.setDataAndType(Uri.fromFile(new File(workItem.photos.get(position - 1).path)), "image/jpg");
+                    intent.setDataAndType(Uri.fromFile(new File(WorkItemActivity.workItem.photos.get(position - 1).path)), "image/jpg");
 
                     getActivity().startActivity(intent);
                 }
@@ -92,7 +85,7 @@ public class WorkItemPhotosFragment extends Fragment {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_.jpg";
         File storageDir = Environment.getExternalStorageDirectory();
-        File image = new File(storageDir, imageFileName);
+        File image = new File(storageDir, "/androidtest/" + imageFileName);
 
         mCurrentPhotoPath = "file:" + image.getAbsolutePath();
         return image;
@@ -106,7 +99,7 @@ public class WorkItemPhotosFragment extends Fragment {
         }
 
         public int getCount() {
-            return workItem.photos.size() + 1;
+            return WorkItemActivity.workItem.photos.size() + 1;
         }
 
         public Object getItem(int position) {
@@ -132,7 +125,9 @@ public class WorkItemPhotosFragment extends Fragment {
             if (position == 0)
                 imageView.setImageResource(R.drawable.add_photo);
             else {
-                Bitmap bitmap = BitmapFactory.decodeFile(workItem.photos.get(position - 1).path);
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 2;
+                Bitmap bitmap = BitmapFactory.decodeFile(WorkItemActivity.workItem.photos.get(position - 1).path, options);
                 imageView.setImageBitmap(bitmap);
             }
 

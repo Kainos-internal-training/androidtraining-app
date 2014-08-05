@@ -30,7 +30,7 @@ public class WorkItemActivity extends Activity {
     private WorkItemPhotosFragment workItemPhotosFragment;
     private WorkItemDetailsFragment workItemDetailsFragment;
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    private WorkItem workItem = null;
+    static public WorkItem workItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +52,8 @@ public class WorkItemActivity extends Activity {
             workItem.photos = new ArrayList<WorkPhoto>();
         }
 
-        workItemPhotosFragment = new WorkItemPhotosFragment(workItem);
-        workItemDetailsFragment = new WorkItemDetailsFragment(workItem);
+        workItemPhotosFragment = new WorkItemPhotosFragment();
+        workItemDetailsFragment = new WorkItemDetailsFragment();
 
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -87,6 +87,18 @@ public class WorkItemActivity extends Activity {
                             .setTabListener(tabListener)
             );
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("content", workItem);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        workItem = (WorkItem) savedInstanceState.getSerializable("content");
     }
 
     @Override
