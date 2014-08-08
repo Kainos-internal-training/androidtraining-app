@@ -21,9 +21,13 @@ public class WorkItemDetailsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_work_item_details, container, false);
 
-        etTitle = (EditText) rootView.findViewById(R.id.etTitle);
-        spTypes = (Spinner) rootView.findViewById(R.id.spTypes);
+        etTitle = (EditText) rootView.findViewById(R.id.WorkItemDetails_et_Title);
+        spTypes = (Spinner) rootView.findViewById(R.id.WorkItemDetails_sp_Types);
 
+        if (WorkItemActivity.workItem != null) {
+            etTitle.setText(WorkItemActivity.workItem.title);
+            spTypes.setSelection(WorkItemActivity.workItem.type);
+        }
         if (WorkItemActivity.workItem != null) {
             etTitle.setText(WorkItemActivity.workItem.title);
             spTypes.setSelection(WorkItemActivity.workItem.type);

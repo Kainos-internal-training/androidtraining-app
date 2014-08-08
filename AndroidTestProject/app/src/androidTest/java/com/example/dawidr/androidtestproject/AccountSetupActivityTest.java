@@ -4,14 +4,14 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class AccountSetupTest extends ActivityInstrumentationTestCase2<AccountSetupActivity> {
+public class AccountSetupActivityTest extends ActivityInstrumentationTestCase2<AccountSetupActivity> {
 
     private AccountSetupActivity accountSetupActivity;
     private EditText etUserName;
     private EditText etEmail;
     private Button btnContinue;
 
-    public AccountSetupTest() {
+    public AccountSetupActivityTest() {
         super(AccountSetupActivity.class);
     }
 
@@ -21,8 +21,8 @@ public class AccountSetupTest extends ActivityInstrumentationTestCase2<AccountSe
 
         accountSetupActivity = getActivity();
 
-        etUserName = (EditText) accountSetupActivity.findViewById(R.id.etUserName);
-        etEmail = (EditText) accountSetupActivity.findViewById(R.id.etEmail);
+        etUserName = (EditText) accountSetupActivity.findViewById(R.id.AccountSetup_et_UserName);
+        etEmail = (EditText) accountSetupActivity.findViewById(R.id.AccountSetup_et_Email);
         btnContinue = (Button) accountSetupActivity.findViewById(R.id.btnContinue);
     }
 

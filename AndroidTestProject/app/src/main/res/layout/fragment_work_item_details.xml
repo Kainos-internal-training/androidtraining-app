@@ -22,7 +22,7 @@
                 android:text="@string/title" />
 
             <EditText
-                android:id="@+id/etTitle"
+                android:id="@+id/WorkItemDetails_et_Title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
@@ -42,7 +42,7 @@
                 android:text="@string/status" />
 
             <Spinner
-                android:id="@+id/spTypes"
+                android:id="@+id/WorkItemDetails_sp_Types"
                 android:gravity="right"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

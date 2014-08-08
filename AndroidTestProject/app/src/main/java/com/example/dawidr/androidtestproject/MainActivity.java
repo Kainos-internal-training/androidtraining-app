@@ -81,12 +81,16 @@ public class MainActivity extends ListActivity {
                 convertView = inflater.inflate(R.layout.list_item, parent, false);
             }
 
-            TextView text = (TextView) convertView.findViewById(R.id.tvTitle);
+            TextView tvTitle = (TextView) convertView.findViewById(R.id.WorkItemList_tv_Title);
+            TextView tvStatus = (TextView) convertView.findViewById(R.id.WorkItemList_tv_Status);
 
             WorkItem item = getItem(position);
 
             if (item != null) {
-                text.setText(item.title);
+                tvTitle.setText(item.title);
+
+                String[] typeArrays = getResources().getStringArray(R.array.type_arrays);
+                tvStatus.setText(typeArrays[item.type]);
             }
 
             return convertView;

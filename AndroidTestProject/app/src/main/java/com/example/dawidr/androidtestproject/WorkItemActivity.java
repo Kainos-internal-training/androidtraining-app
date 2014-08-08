@@ -6,6 +6,8 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -16,21 +18,42 @@ import android.view.MenuItem;
 
 import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
 import com.example.dawidr.androidtestproject.Database.Model.WorkPhoto;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.drive.Contents;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveApi;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.MetadataChangeSet;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
-public class WorkItemActivity extends Activity {
+public class WorkItemActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private App app;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
     private WorkItemPhotosFragment workItemPhotosFragment;
     private WorkItemDetailsFragment workItemDetailsFragment;
-    static final int REQUEST_IMAGE_CAPTURE = 1;
+
     static public WorkItem workItem;
+    static final int RESOLVE_CONNECTION_REQUEST_CODE = 0;
+    static final int REQUEST_CODE_RESOLUTION = 3;
+    Boolean isCreating = false;
+
+    GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +70,11 @@ public class WorkItemActivity extends Activity {
 
         if (this.getIntent().hasExtra("content")) {
             workItem = (WorkItem) this.getIntent().getSerializableExtra("content");
+            isCreating = false;
         } else {
             workItem = new WorkItem();
             workItem.photos = new ArrayList<WorkPhoto>();
+            isCreating = true;
         }
 
         workItemPhotosFragment = new WorkItemPhotosFragment();
@@ -117,12 +142,36 @@ public class WorkItemActivity extends Activity {
                 app.dataManager.updateWorkItem(workItem);
             } else {
                 app.dataManager.insertWorkItem(workItem);
+
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mGoogleApiClient.isConnected()) {
+                            for (WorkPhoto p : workItem.photos) {
+                                mGoogleApiClient.blockingConnect(5, TimeUnit.SECONDS);
+                                saveFileToDrive(p.path);
+                            }
+                        }
+                    }
+                });
+                t.start();
             }
             finish();
 
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        if (isCreating) {
+            for (WorkPhoto p : workItem.photos) {
+                new File(p.path).delete();
+            }
+        }
     }
 
     void FillEntity(WorkItem workItem) {
@@ -142,6 +191,115 @@ public class WorkItemActivity extends Activity {
 
         //Type
         workItem.type = workItemDetailsFragment.spTypes.getSelectedItemPosition();
+    }
+
+    private void saveFileToDrive(String path) {
+        final String pathSSS = path;
+        Drive.DriveApi.newContents(mGoogleApiClient)
+                .setResultCallback(new ResultCallback<DriveApi.ContentsResult>() {
+                    @Override
+                    public void onResult(DriveApi.ContentsResult contentsResult) {
+
+                        Contents contents = contentsResult.getContents();
+
+                        byte[] buf = new byte[1024];
+                        int nbyteWritten = 0;
+                        int nbyte;
+                        OutputStream outputStream = contentsResult.getContents().getOutputStream();
+                        try {
+                            DataInputStream dis = new DataInputStream(new FileInputStream(new File(pathSSS)));
+                            DataOutputStream dos = new DataOutputStream(outputStream);
+                            while ((nbyte = dis.read(buf)) > 0) {
+                                dos.write(buf, 0, nbyte);
+                                nbyteWritten += nbyte;
+                            }
+                            dis.close();
+                            dos.close();
+                        } catch (IOException e1) {
+                        }
+
+                        MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
+                                .setMimeType("image/jpeg")
+                                .setTitle(pathSSS)
+                                .build();
+
+                        Drive.DriveApi.getRootFolder(mGoogleApiClient)
+                                .createFile(mGoogleApiClient, changeSet, contents)
+                                .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
+                                    @Override
+                                    public void onResult(DriveFolder.DriveFileResult driveFileResult) {
+
+                                    }
+                                });
+                    }
+                });
+    }
+
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        switch (requestCode) {
+            case RESOLVE_CONNECTION_REQUEST_CODE:
+                if (resultCode == RESULT_OK) {
+                    mGoogleApiClient.connect();
+                }
+                break;
+        }
+    }
+
+    void ConnectGoogleDrive() {
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addApi(Drive.API)
+                    .addScope(Drive.SCOPE_FILE)
+                    .addScope(Drive.SCOPE_APPFOLDER)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+        }
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ConnectGoogleDrive();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+
+        if (!result.hasResolution()) {
+
+            GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), this, 0).show();
+            return;
+        }
+
+        try {
+            result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
+        } catch (IntentSender.SendIntentException e) {
+        }
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {

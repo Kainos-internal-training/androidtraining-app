@@ -3,12 +3,14 @@ package com.example.dawidr.androidtestproject;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
+import android.widget.ListView;
 
-public class MainTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActivity> {
 
     private MainActivity mainActivity;
+    private ListView list;
 
-    public MainTest() {
+    public MainActivityTest() {
         super(MainActivity.class);
     }
 
@@ -17,10 +19,10 @@ public class MainTest extends ActivityInstrumentationTestCase2<MainActivity> {
         super.setUp();
 
         mainActivity = getActivity();
+        list = (ListView) mainActivity.findViewById(android.R.id.list);
     }
 
     public void test_add_click() {
-
         Instrumentation.ActivityMonitor am = getInstrumentation().addMonitor(WorkItemActivity.class.getName(), null, false);
         getInstrumentation().invokeMenuActionSync(mainActivity, R.id.action_new, 0);
         Activity activity = getInstrumentation().waitForMonitorWithTimeout(am, 1000);

@@ -29,7 +29,7 @@ public class SplashScreenActivity extends Activity {
                 Log.e("SplashScreenActivity", e.getMessage());
             }
 
-            SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.preferences_name), MODE_PRIVATE);
+            SharedPreferences sharedPreferences = getSharedPreferences(App.APP_PACKAGE_NAME, MODE_PRIVATE);
 
             Intent intent = null;
             if (sharedPreferences.getBoolean(getString(R.string.is_first_run), true)) {
