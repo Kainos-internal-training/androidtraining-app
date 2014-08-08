@@ -167,5 +167,4 @@ public class WorkItemPhotosFragment extends Fragment {
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(path, options);
     }
-
 }

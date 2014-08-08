@@ -115,6 +115,8 @@ public class DataManager {
     }
 
     public void deleteWorkItem(WorkItem entity) {
+
+        workPhotoDao.deleteAll(entity.id);
         workItemDao.delete(entity);
     }
 

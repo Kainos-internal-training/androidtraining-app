@@ -32,10 +32,6 @@
         <item>Closed</item>
     </string-array>
 
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="title_activity_full_screen">FullScreenActivity</string>
-    <string name="hello_world">Hello world!</string>
-
+    <string name="delete">Delete</string>
+    <string name="delete_from_list">Delete from list</string>
 </resources>

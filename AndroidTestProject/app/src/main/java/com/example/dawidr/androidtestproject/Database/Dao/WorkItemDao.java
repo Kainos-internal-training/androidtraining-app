@@ -53,6 +53,8 @@ public class WorkItemDao implements Dao<WorkItem> {
 
     @Override
     public void delete(WorkItem entity) {
+
+
         db.delete(WorkItemTable.TABLE_NAME, BaseColumns._ID + " = ?", new String[]{String.valueOf(entity.id)});
     }
 
