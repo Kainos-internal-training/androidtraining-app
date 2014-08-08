@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -116,16 +118,39 @@ public class WorkItemPhotosFragment extends Fragment {
             if (convertView == null) {
                 imageView = new ImageView(mContext);
                 imageView.setLayoutParams(new GridView.LayoutParams(150, 150));
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                 imageView.setPadding(8, 8, 8, 8);
             } else {
                 imageView = (ImageView) convertView;
             }
 
-            if (position == 0)
+            if (position == 0) {
+                imageView.setLayoutParams(new GridView.LayoutParams(140, 140));
                 imageView.setImageResource(R.drawable.add_photo);
+            }
             else {
-                imageView.setImageBitmap(decodeSampledBitmapFromFile(WorkItemActivity.workItem.photos.get(position - 1).path, 150, 150));
+
+                Bitmap bitmap = decodeSampledBitmapFromFile(WorkItemActivity.workItem.photos.get(position - 1).path, 150, 150);
+
+                try {
+                    ExifInterface exif = new ExifInterface(WorkItemActivity.workItem.photos.get(position - 1).path);
+
+                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+
+                    Matrix matrix = new Matrix();
+                    if (orientation == 6) {
+                        matrix.postRotate(90);
+                    } else if (orientation == 3) {
+                        matrix.postRotate(180);
+                    } else if (orientation == 8) {
+                        matrix.postRotate(270);
+                    }
+
+                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                } catch (Exception e) {
+                } finally {
+                    imageView.setImageBitmap(bitmap);
+                }
             }
 
             return imageView;
