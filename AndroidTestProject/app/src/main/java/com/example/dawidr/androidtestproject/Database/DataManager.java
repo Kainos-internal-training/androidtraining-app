@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.SystemClock;
 
 import com.example.dawidr.androidtestproject.Database.Dao.WorkItemDao;
 import com.example.dawidr.androidtestproject.Database.Dao.WorkPhotoDao;
@@ -52,7 +51,6 @@ public class DataManager {
 
     private void resetDb() {
         closeDb();
-        SystemClock.sleep(500);
         openDb();
     }
 

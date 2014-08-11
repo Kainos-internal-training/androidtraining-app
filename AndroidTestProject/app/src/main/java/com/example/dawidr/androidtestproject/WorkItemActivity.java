@@ -15,6 +15,7 @@ import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
 import com.example.dawidr.androidtestproject.Database.Model.WorkPhoto;
@@ -61,6 +62,7 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
         setContentView(R.layout.activity_work_item);
 
         app = (App) getApplication();
+
         final ActionBar actionBar = getActionBar();
 
         if (actionBar != null)
@@ -215,22 +217,28 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
                             }
                             dis.close();
                             dos.close();
+
+                            MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
+                                    .setMimeType("image/jpeg")
+                                    .setTitle(pathSSS)
+                                    .build();
+
+                            Drive.DriveApi.getRootFolder(mGoogleApiClient)
+                                    .createFile(mGoogleApiClient, changeSet, contents)
+                                    .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
+                                        @Override
+                                        public void onResult(DriveFolder.DriveFileResult driveFileResult) {
+
+                                        }
+                                    });
                         } catch (IOException e1) {
+                            Context context = getApplicationContext();
+                            CharSequence text = String.format(getString(R.string.error_upload_photo), pathSSS);
+                            int duration = Toast.LENGTH_SHORT;
+
+                            Toast toast = Toast.makeText(context, text, duration);
+                            toast.show();
                         }
-
-                        MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
-                                .setMimeType("image/jpeg")
-                                .setTitle(pathSSS)
-                                .build();
-
-                        Drive.DriveApi.getRootFolder(mGoogleApiClient)
-                                .createFile(mGoogleApiClient, changeSet, contents)
-                                .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
-                                    @Override
-                                    public void onResult(DriveFolder.DriveFileResult driveFileResult) {
-
-                                    }
-                                });
                     }
                 });
     }
@@ -263,11 +271,6 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
     protected void onResume() {
         super.onResume();
         ConnectGoogleDrive();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
     }
 
     @Override

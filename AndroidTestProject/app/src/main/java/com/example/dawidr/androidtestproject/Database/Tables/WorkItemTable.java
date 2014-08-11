@@ -22,7 +22,7 @@ public class WorkItemTable {
         sb.append(BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, ");
         sb.append(WorkItemColumns.TITLE + " TEXT, ");
         sb.append(WorkItemColumns.CURRENT_DATE + " TEXT, ");
-        sb.append(WorkItemColumns.GPS_LONGITUDE + " TEXT, ");
+        sb.append(WorkItemColumns.GPS_LONGITUDE + " REAL, ");
         sb.append(WorkItemColumns.GPS_LATITUDE + " REAL, ");
         sb.append(WorkItemColumns.TYPE + " INTEGER");
         sb.append(");");
