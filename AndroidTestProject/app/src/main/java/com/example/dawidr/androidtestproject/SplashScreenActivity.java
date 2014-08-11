@@ -8,7 +8,7 @@ import android.util.Log;
 
 public class SplashScreenActivity extends Activity {
 
-    private static int SPLASH_TIME_OUT = 3000; //milliseconds
+    private final static int SPLASH_TIME_OUT = 3000; //milliseconds
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,12 +29,15 @@ public class SplashScreenActivity extends Activity {
                 Log.e("SplashScreenActivity", e.getMessage());
             }
 
-            SharedPreferences sharedPreferences = getSharedPreferences("com.example.dawidr.androidtestproject", MODE_PRIVATE);
+            SharedPreferences sharedPreferences = getSharedPreferences(App.APP_PACKAGE_NAME, MODE_PRIVATE);
 
             Intent intent = null;
-            if (sharedPreferences.getBoolean("is_first_run", true)) {
+            if (sharedPreferences.getBoolean(getString(R.string.is_first_run), true)) {
                 intent = new Intent(SplashScreenActivity.this, AccountSetupActivity.class);
-                sharedPreferences.edit().putBoolean("is_first_run", false).commit();
+
+                sharedPreferences.edit()
+                        .putBoolean(getString(R.string.is_first_run), false)
+                        .commit();
             } else {
                 intent = new Intent(SplashScreenActivity.this, MainActivity.class);
             }

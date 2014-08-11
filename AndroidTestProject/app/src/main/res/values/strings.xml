@@ -1,12 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AndroidTestProject</string>
-    <string name="hello_world">Hello world!</string>
+
+    <!-- main -->
+    <string name="app_name">Android Test Project</string>
+
+    <!-- actions -->
+    <string name="action_new">New</string>
     <string name="action_settings">Settings</string>
+    <string name="action_save">Save</string>
+
+    <!-- titles -->
     <string name="title_activity_splash_screen">SplashScreenActivity</string>
     <string name="title_activity_account_setup">Account Setup</string>
+    <string name="title_activity_work_item">Work Item</string>
+    <string name="title_section_photos">Photos</string>
+    <string name="title_section_details">Details</string>
+
+    <!-- constants -->
+    <string name="is_first_run">is_first_run</string>
+
+    <!-- user interface -->
     <string name="user_name">User name:</string>
     <string name="email">E-mail:</string>
-    <string name="save">Save</string>
     <string name="cont">Continue</string>
+    <string name="title">Title: </string>
+    <string name="status">Status: </string>
+
+    <!-- types -->
+    <string-array name="type_arrays">
+        <item>Open</item>
+        <item>Closed</item>
+    </string-array>
+
+    <string name="delete">Delete</string>
+    <string name="delete_from_list">Delete from list</string>
 </resources>

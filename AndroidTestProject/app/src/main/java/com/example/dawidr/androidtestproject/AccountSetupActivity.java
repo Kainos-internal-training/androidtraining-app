@@ -12,14 +12,13 @@ import android.widget.EditText;
 
 public class AccountSetupActivity extends Activity {
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account_setup);
 
-        EditText etUserName = (EditText) findViewById(R.id.etUserName);
-        EditText etEmail = (EditText) findViewById(R.id.etEmail);
+        EditText etUserName = (EditText) findViewById(R.id.AccountSetup_et_UserName);
+        EditText etEmail = (EditText) findViewById(R.id.AccountSetup_et_Email);
 
         TextWatcher textWatcher = new TextWatcher() {
             @Override
@@ -30,8 +29,8 @@ public class AccountSetupActivity extends Activity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
 
                 Button btnContinue = (Button) findViewById(R.id.btnContinue);
-                String strUserName = ((EditText) findViewById(R.id.etUserName)).getText().toString();
-                String strEmail = ((EditText) findViewById(R.id.etEmail)).getText().toString();
+                String strUserName = ((EditText) findViewById(R.id.AccountSetup_et_UserName)).getText().toString();
+                String strEmail = ((EditText) findViewById(R.id.AccountSetup_et_Email)).getText().toString();
 
                 if (strUserName.length() != 0 && strEmail.length() != 0)
                     btnContinue.setEnabled(true);
@@ -50,11 +49,10 @@ public class AccountSetupActivity extends Activity {
 
     public void ContinueClick(View view) {
 
-        Button btnContinue = (Button) findViewById(R.id.btnContinue);
-        String strUserName = ((EditText) findViewById(R.id.etUserName)).getText().toString();
-        String strEmail = ((EditText) findViewById(R.id.etEmail)).getText().toString();
+        String strUserName = ((EditText) findViewById(R.id.AccountSetup_et_UserName)).getText().toString();
+        String strEmail = ((EditText) findViewById(R.id.AccountSetup_et_Email)).getText().toString();
 
-        SharedPreferences sharedPreferences = getSharedPreferences("com.example.dawidr.androidtestproject", MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences(App.APP_PACKAGE_NAME, MODE_PRIVATE);
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("user_name", strUserName);
