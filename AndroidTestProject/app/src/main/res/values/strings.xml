@@ -32,6 +32,9 @@
         <item>Closed</item>
     </string-array>
 
+    <!--errors-->
+    <string name="error_upload_photo">Failed to upload photo: "%1$s" to Google Drive. Sorry. :(</string>
+
     <string name="delete">Delete</string>
     <string name="delete_from_list">Delete from list</string>
 </resources>
