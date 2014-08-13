@@ -56,6 +56,8 @@ public class WorkItemPhotosFragment extends Fragment {
 
                             WorkPhoto workPhoto = new WorkPhoto();
                             workPhoto.path = file.getAbsolutePath();
+                            workPhoto.name = Integer.toString(imageAdapter.getCount());
+                            workPhoto.is_uploaded = false;
 
                             WorkItemActivity.workItem.photos.add(workPhoto);
                         }
@@ -129,6 +131,9 @@ public class WorkItemPhotosFragment extends Fragment {
                 imageView.setImageResource(R.drawable.add_photo);
             }
             else {
+
+                if (WorkItemActivity.workItem.photos.get(position - 1).is_uploaded)
+                    imageView.setBackgroundColor(0xFF16A085);
 
                 Bitmap bitmap = decodeSampledBitmapFromFile(WorkItemActivity.workItem.photos.get(position - 1).path, 150, 150);
 

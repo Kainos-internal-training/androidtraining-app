@@ -118,4 +118,7 @@ public class DataManager {
         workItemDao.delete(entity);
     }
 
+    public void updateWorkPhoto(WorkPhoto entity) {
+        workPhotoDao.update(entity);
+    }
 }

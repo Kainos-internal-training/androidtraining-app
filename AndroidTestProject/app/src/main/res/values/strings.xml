@@ -34,6 +34,10 @@
 
     <!--errors-->
     <string name="error_upload_photo">Failed to upload photo: "%1$s" to Google Drive. Sorry. :(</string>
+    <string name="error_title_empty">The field \"title\" couldn\'t be empty.\nPlease fill this field.</string>
+
+    <!--success-->
+    <string name="success_photo_upload">Successfully uploaded photo. : )</string>
 
     <string name="delete">Delete</string>
     <string name="delete_from_list">Delete from list</string>

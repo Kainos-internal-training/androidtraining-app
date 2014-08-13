@@ -1,5 +1,6 @@
 package com.example.dawidr.androidtestproject;
 
+import android.accounts.AccountManager;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
@@ -7,7 +8,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -19,42 +20,76 @@ import android.widget.Toast;
 
 import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
 import com.example.dawidr.androidtestproject.Database.Model.WorkPhoto;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.drive.Contents;
-import com.google.android.gms.drive.Drive;
-import com.google.android.gms.drive.DriveApi;
-import com.google.android.gms.drive.DriveFolder;
-import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.googleapis.media.MediaHttpUploader;
+import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
+import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-public class WorkItemActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class WorkItemActivity extends Activity {
 
     private App app;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
     private WorkItemPhotosFragment workItemPhotosFragment;
     private WorkItemDetailsFragment workItemDetailsFragment;
+    private WorkItemActivity workItemActivity;
 
     static public WorkItem workItem;
     static final int RESOLVE_CONNECTION_REQUEST_CODE = 0;
+    static final int REQUEST_ACCOUNT_PICKER = 1;
+    static final int COMPLETE_AUTHORIZATION_REQUEST_CODE = 2;
     static final int REQUEST_CODE_RESOLUTION = 3;
     Boolean isCreating = false;
+    SharedPreferences sharedPreferences;
 
-    GoogleApiClient mGoogleApiClient;
+    GoogleAccountCredential credential;
+    Drive service;
+
+    class CustomProgressListener implements MediaHttpUploaderProgressListener {
+
+        WorkPhoto workPhoto;
+
+        public CustomProgressListener(WorkPhoto photo) {
+            workPhoto = photo;
+        }
+
+        public void progressChanged(MediaHttpUploader uploader) throws IOException {
+            switch (uploader.getUploadState()) {
+                case INITIATION_STARTED:
+                    System.out.println("Initiation has started!");
+                    break;
+                case INITIATION_COMPLETE:
+                    System.out.println("Initiation is complete!");
+                    break;
+                case MEDIA_IN_PROGRESS:
+                    System.out.println(uploader.getProgress());
+                    break;
+                case MEDIA_COMPLETE:
+
+                    workPhoto.is_uploaded = true;
+                    // app.dataManager.updateWorkItem(workItem);
+
+                    app.dataManager.updateWorkPhoto(workPhoto);
+
+                    System.out.println("Upload is complete!");
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +97,7 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
         setContentView(R.layout.activity_work_item);
 
         app = (App) getApplication();
+        workItemActivity = this;
 
         final ActionBar actionBar = getActionBar();
 
@@ -69,6 +105,16 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
             actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
         mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
+
+        sharedPreferences = getSharedPreferences(App.APP_PACKAGE_NAME, MODE_PRIVATE);
+
+//      Google Drive
+        credential = GoogleAccountCredential.usingOAuth2(this, Collections.singleton(DriveScopes.DRIVE));
+        String accountName = sharedPreferences.getString(App.PREFERENCES_ACCOUNT_NAME, null);
+        if (accountName != null)
+            ConnectToGoogleDrive(accountName);
+        else
+            startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
 
         if (this.getIntent().hasExtra("content")) {
             workItem = (WorkItem) this.getIntent().getSerializableExtra("content");
@@ -139,6 +185,18 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
         int id = item.getItemId();
         if (id == R.id.action_save) {
 
+            if (workItemDetailsFragment.etTitle.getText().toString().length() == 0) {
+
+                mViewPager.setCurrentItem(1);
+
+                Toast.makeText(getApplicationContext(),
+                        getString(R.string.error_title_empty),
+                        Toast.LENGTH_SHORT)
+                        .show();
+
+                return false;
+            }
+
             FillEntity(workItem);
             if (this.getIntent().hasExtra("content")) {
                 app.dataManager.updateWorkItem(workItem);
@@ -148,12 +206,32 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
                 Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        if (mGoogleApiClient.isConnected()) {
                             for (WorkPhoto p : workItem.photos) {
-                                mGoogleApiClient.blockingConnect(5, TimeUnit.SECONDS);
-                                saveFileToDrive(p.path);
+                                try {
+                                    File mediaFile = new File(p.path);
+                                    InputStreamContent mediaContent =
+                                            new InputStreamContent("image/jpeg",
+                                                    new BufferedInputStream(new FileInputStream(mediaFile)));
+                                    mediaContent.setLength(mediaFile.length());
+
+                                    com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                                    fileMetadata.setTitle(p.path);
+
+                                    Drive.Files.Insert request = service.files().insert(fileMetadata, mediaContent);
+                                    request.getMediaHttpUploader().setProgressListener(new CustomProgressListener(p));
+                                    request.execute();
+                                } catch (UserRecoverableAuthIOException e) {
+                                    startActivityForResult(e.getIntent(), COMPLETE_AUTHORIZATION_REQUEST_CODE);
+                                } catch (IOException e) {
+                                    runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            //TODO - poprawić ""
+                                            Toast.makeText(workItemActivity, String.format(getString(R.string.error_upload_photo), ""), Toast.LENGTH_SHORT)
+                                                    .show();
+                                        }
+                                    });
+                                }
                             }
-                        }
                     }
                 });
                 t.start();
@@ -195,113 +273,38 @@ public class WorkItemActivity extends Activity implements GoogleApiClient.Connec
         workItem.type = workItemDetailsFragment.spTypes.getSelectedItemPosition();
     }
 
-    private void saveFileToDrive(String path) {
-        final String pathSSS = path;
-        Drive.DriveApi.newContents(mGoogleApiClient)
-                .setResultCallback(new ResultCallback<DriveApi.ContentsResult>() {
-                    @Override
-                    public void onResult(DriveApi.ContentsResult contentsResult) {
+    private Drive getDriveService(GoogleAccountCredential credential) {
+        return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential).build();
+    }
 
-                        Contents contents = contentsResult.getContents();
-
-                        byte[] buf = new byte[1024];
-                        int nbyteWritten = 0;
-                        int nbyte;
-                        OutputStream outputStream = contentsResult.getContents().getOutputStream();
-                        try {
-                            DataInputStream dis = new DataInputStream(new FileInputStream(new File(pathSSS)));
-                            DataOutputStream dos = new DataOutputStream(outputStream);
-                            while ((nbyte = dis.read(buf)) > 0) {
-                                dos.write(buf, 0, nbyte);
-                                nbyteWritten += nbyte;
-                            }
-                            dis.close();
-                            dos.close();
-
-                            MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
-                                    .setMimeType("image/jpeg")
-                                    .setTitle(pathSSS)
-                                    .build();
-
-                            Drive.DriveApi.getRootFolder(mGoogleApiClient)
-                                    .createFile(mGoogleApiClient, changeSet, contents)
-                                    .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
-                                        @Override
-                                        public void onResult(DriveFolder.DriveFileResult driveFileResult) {
-
-                                        }
-                                    });
-                        } catch (IOException e1) {
-                            Context context = getApplicationContext();
-                            CharSequence text = String.format(getString(R.string.error_upload_photo), pathSSS);
-                            int duration = Toast.LENGTH_SHORT;
-
-                            Toast toast = Toast.makeText(context, text, duration);
-                            toast.show();
-                        }
-                    }
-                });
+    private void ConnectToGoogleDrive(String accountName) {
+        credential.setSelectedAccountName(accountName);
+        service = getDriveService(credential);
     }
 
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         switch (requestCode) {
-            case RESOLVE_CONNECTION_REQUEST_CODE:
-                if (resultCode == RESULT_OK) {
-                    mGoogleApiClient.connect();
+            case REQUEST_ACCOUNT_PICKER:
+                if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+
+                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountName != null) {
+                        ConnectToGoogleDrive(accountName);
+
+                        sharedPreferences.edit()
+                                .putString(App.PREFERENCES_ACCOUNT_NAME, accountName)
+                                .commit();
+                    }
                 }
                 break;
-        }
-    }
-
-    void ConnectGoogleDrive() {
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addApi(Drive.API)
-                    .addScope(Drive.SCOPE_FILE)
-                    .addScope(Drive.SCOPE_APPFOLDER)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
-        }
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        ConnectGoogleDrive();
-    }
-
-    @Override
-    protected void onPause() {
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onPause();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult result) {
-
-        if (!result.hasResolution()) {
-
-            GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), this, 0).show();
-            return;
-        }
-
-        try {
-            result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
-        } catch (IntentSender.SendIntentException e) {
+            case COMPLETE_AUTHORIZATION_REQUEST_CODE:
+                if (resultCode == Activity.RESULT_OK) {
+                    // App is authorized, you can go back to sending the API request
+                } else {
+                    // User denied access, show him the account chooser again
+                }
+                break;
         }
     }
 

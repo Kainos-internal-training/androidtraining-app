@@ -10,6 +10,8 @@ public final class WorkPhotoTable {
     public static class WorkPhotoColumns {
         public static final String WORK_ITEM_ID = "work_item_id";
         public static final String PATH = "path";
+        public static final String NAME = "name";
+        public static final String IS_UPLOADED = "is_uploaded";
     }
 
     public static void onCreate(SQLiteDatabase db) {
@@ -19,6 +21,8 @@ public final class WorkPhotoTable {
         sb.append(BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, ");
         sb.append(WorkPhotoColumns.WORK_ITEM_ID + " INTEGER NOT NULL, ");
         sb.append(WorkPhotoColumns.PATH + " TEXT, ");
+        sb.append(WorkPhotoColumns.NAME + " TEXT, ");
+        sb.append(WorkPhotoColumns.IS_UPLOADED + " NUMERIC, ");
         sb.append("FOREIGN KEY(" + WorkPhotoColumns.WORK_ITEM_ID + ") REFERENCES " + WorkItemTable.TABLE_NAME + "("
                 + BaseColumns._ID + ")");
         sb.append(");");
