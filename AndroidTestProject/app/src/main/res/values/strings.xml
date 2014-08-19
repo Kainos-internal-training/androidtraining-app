@@ -33,11 +33,18 @@
     </string-array>
 
     <!--errors-->
-    <string name="error_upload_photo">Failed to upload photo: "%1$s" to Google Drive. Sorry. :(</string>
-    <string name="error_title_empty">The field \"title\" couldn\'t be empty.\nPlease fill this field.</string>
+    <string name="error_upload">Failed to upload content to Google Drive. :(</string>
+    <string name="error_upload_photos">Failed to upload photos to Google Drive. :(</string>
+    <string name="error_title_empty">The field ,,title\'\' couldn\'t be empty.\nPlease fill this field.</string>
 
     <!--success-->
-    <string name="success_photo_upload">Successfully uploaded photo. : )</string>
+    <string name="success_upload">Successfully uploaded content to Google Drive. : )</string>
+
+    <!--google drive-->
+    <string name="folder_photos">photos</string>
+    <string name="file_data_form">data</string>
+    <string name="pb_google_drive_title">Please wait</string>
+    <string name="pb_google_drive_message">Uploading to Google Drive...</string>
 
     <string name="delete">Delete</string>
     <string name="delete_from_list">Delete from list</string>

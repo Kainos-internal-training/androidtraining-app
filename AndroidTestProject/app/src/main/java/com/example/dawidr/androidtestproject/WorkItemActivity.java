@@ -6,9 +6,11 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -16,23 +18,20 @@ import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.example.dawidr.androidtestproject.Database.Model.WorkItem;
 import com.example.dawidr.androidtestproject.Database.Model.WorkPhoto;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
-import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,15 +49,14 @@ public class WorkItemActivity extends Activity {
     private WorkItemActivity workItemActivity;
 
     static public WorkItem workItem;
-    static final int RESOLVE_CONNECTION_REQUEST_CODE = 0;
     static final int REQUEST_ACCOUNT_PICKER = 1;
-    static final int COMPLETE_AUTHORIZATION_REQUEST_CODE = 2;
-    static final int REQUEST_CODE_RESOLUTION = 3;
     Boolean isCreating = false;
     SharedPreferences sharedPreferences;
 
     GoogleAccountCredential credential;
     Drive service;
+
+    private ProgressDialog _progressDialog = null;
 
     class CustomProgressListener implements MediaHttpUploaderProgressListener {
 
@@ -68,25 +66,18 @@ public class WorkItemActivity extends Activity {
             workPhoto = photo;
         }
 
-        public void progressChanged(MediaHttpUploader uploader) throws IOException {
+        public void progressChanged(final MediaHttpUploader uploader) throws IOException {
             switch (uploader.getUploadState()) {
                 case INITIATION_STARTED:
-                    System.out.println("Initiation has started!");
                     break;
                 case INITIATION_COMPLETE:
-                    System.out.println("Initiation is complete!");
                     break;
                 case MEDIA_IN_PROGRESS:
-                    System.out.println(uploader.getProgress());
+                    _progressDialog.setProgress((int) uploader.getProgress());
                     break;
                 case MEDIA_COMPLETE:
-
                     workPhoto.is_uploaded = true;
-                    // app.dataManager.updateWorkItem(workItem);
-
                     app.dataManager.updateWorkPhoto(workPhoto);
-
-                    System.out.println("Upload is complete!");
             }
         }
     }
@@ -118,6 +109,7 @@ public class WorkItemActivity extends Activity {
 
         if (this.getIntent().hasExtra("content")) {
             workItem = (WorkItem) this.getIntent().getSerializableExtra("content");
+            workItem = app.dataManager.getWorkItem(workItem.id);
             isCreating = false;
         } else {
             workItem = new WorkItem();
@@ -188,59 +180,106 @@ public class WorkItemActivity extends Activity {
             if (workItemDetailsFragment.etTitle.getText().toString().length() == 0) {
 
                 mViewPager.setCurrentItem(1);
-
-                Toast.makeText(getApplicationContext(),
-                        getString(R.string.error_title_empty),
-                        Toast.LENGTH_SHORT)
-                        .show();
+                ShowToast(getString(R.string.error_title_empty));
 
                 return false;
             }
 
             FillEntity(workItem);
+
+            //Hide keyboard
+            InputMethodManager inputMethodManager = (InputMethodManager) this.getSystemService(Activity.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), 0);
+
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+            _progressDialog = ProgressDialog.show(this, getResources().getString(R.string.pb_google_drive_title), getResources().getString(R.string.pb_google_drive_message), true, false);
+
             if (this.getIntent().hasExtra("content")) {
                 app.dataManager.updateWorkItem(workItem);
-            } else {
-                app.dataManager.insertWorkItem(workItem);
 
                 Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                            for (WorkPhoto p : workItem.photos) {
-                                try {
-                                    File mediaFile = new File(p.path);
-                                    InputStreamContent mediaContent =
-                                            new InputStreamContent("image/jpeg",
-                                                    new BufferedInputStream(new FileInputStream(mediaFile)));
-                                    mediaContent.setLength(mediaFile.length());
+                        try {
+                            com.google.api.services.drive.model.File fileFolderID = GoogleDriveHelper.GetFolder(service, Long.toString(workItem.id));
+                            com.google.api.services.drive.model.File fileFolderPhotos = GoogleDriveHelper.GetFolder(service, getResources().getString(R.string.folder_photos), fileFolderID.getId());
+                            com.google.api.services.drive.model.File fileDataForm = GoogleDriveHelper.GetFile(service, getResources().getString(R.string.file_data_form), fileFolderID.getId());
 
-                                    com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                                    fileMetadata.setTitle(p.path);
+                            service.files().update(fileDataForm.getId(), fileDataForm, GoogleDriveHelper.GetTempFileContent(FormToString())).execute();
 
-                                    Drive.Files.Insert request = service.files().insert(fileMetadata, mediaContent);
-                                    request.getMediaHttpUploader().setProgressListener(new CustomProgressListener(p));
-                                    request.execute();
-                                } catch (UserRecoverableAuthIOException e) {
-                                    startActivityForResult(e.getIntent(), COMPLETE_AUTHORIZATION_REQUEST_CODE);
-                                } catch (IOException e) {
-                                    runOnUiThread(new Runnable() {
-                                        public void run() {
-                                            //TODO - poprawić ""
-                                            Toast.makeText(workItemActivity, String.format(getString(R.string.error_upload_photo), ""), Toast.LENGTH_SHORT)
-                                                    .show();
-                                        }
-                                    });
+                            if (fileFolderID != null) {
+                                for (WorkPhoto p : workItem.photos) {
+                                    if (!p.is_uploaded)
+                                        GoogleDriveHelper.UploadPhotoToGoogleDrive(service, p, fileFolderPhotos.getId(), new CustomProgressListener(p));
                                 }
                             }
+                            ShowToast(getString(R.string.success_upload));
+                        } catch (Exception e) {
+                            ShowToast(getString(R.string.error_upload));
+                        } finally {
+                            _progressDialog.dismiss();
+                            _progressDialog = null;
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                            finish();
+                        }
+                    }
+                });
+                t.start();
+            } else {
+                app.dataManager.insertWorkItem(workItem);
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            com.google.api.services.drive.model.File fileFolderID = GoogleDriveHelper.CreateFolder(service, Long.toString(workItem.id));
+                            com.google.api.services.drive.model.File fileFolderPhotos = GoogleDriveHelper.CreateFolder(service, getResources().getString(R.string.folder_photos), fileFolderID.getId());
+
+                            if (fileFolderID != null && fileFolderPhotos != null) {
+                                com.google.api.services.drive.model.File fileDataForm = GoogleDriveHelper.CreateFile(getResources().getString(R.string.file_data_form), fileFolderID.getId());
+                                service.files().insert(fileDataForm, GoogleDriveHelper.GetTempFileContent(FormToString())).execute();
+
+                                for (WorkPhoto p : workItem.photos) {
+                                    GoogleDriveHelper.UploadPhotoToGoogleDrive(service, p, fileFolderPhotos.getId(), new CustomProgressListener(p));
+                                }
+                            }
+                            ShowToast(getString(R.string.success_upload));
+                        } catch (Exception e) {
+                            ShowToast(getString(R.string.error_upload));
+                        } finally {
+                            _progressDialog.dismiss();
+                            _progressDialog = null;
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                            finish();
+                        }
                     }
                 });
                 t.start();
             }
-            finish();
 
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void ShowToast(String message) {
+        final String msg = message;
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(workItemActivity, msg, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+    }
+
+    private String FormToString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Title: " + workItem.title + "\n");
+        sb.append("Current date: " + workItem.current_date + "\n");
+        sb.append("GPS Longitude: " + workItem.gps_longitude + "\n");
+        sb.append("GPS Latitude: " + workItem.gps_latitude + "\n");
+        sb.append("Type: " + getResources().getStringArray(R.array.type_arrays)[workItem.type] + "\n");
+
+        return sb.toString();
     }
 
     @Override
@@ -263,7 +302,8 @@ public class WorkItemActivity extends Activity {
 
         //GPS coordinates
         LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        Location location = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
         if (location != null) {
             workItem.gps_longitude = location.getLongitude();
             workItem.gps_latitude = location.getLatitude();
@@ -296,13 +336,6 @@ public class WorkItemActivity extends Activity {
                                 .putString(App.PREFERENCES_ACCOUNT_NAME, accountName)
                                 .commit();
                     }
-                }
-                break;
-            case COMPLETE_AUTHORIZATION_REQUEST_CODE:
-                if (resultCode == Activity.RESULT_OK) {
-                    // App is authorized, you can go back to sending the API request
-                } else {
-                    // User denied access, show him the account chooser again
                 }
                 break;
         }
