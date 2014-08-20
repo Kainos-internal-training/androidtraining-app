@@ -18,23 +18,19 @@ import java.util.Arrays;
 
 public class GoogleDriveHelper {
 
-    public static File CreateFolder(Drive service, String title) {
+    public static File CreateFolder(Drive service, String title) throws IOException {
         return CreateFolder(service, title, null);
     }
 
-    public static File CreateFolder(Drive service, String title, String parent_id) {
-        try {
-            File folder = new File();
-            folder.setTitle(title);
-            folder.setMimeType("application/vnd.google-apps.folder");
+    public static File CreateFolder(Drive service, String title, String parent_id) throws IOException {
+        File folder = new File();
+        folder.setTitle(title);
+        folder.setMimeType("application/vnd.google-apps.folder");
 
-            if (parent_id != null)
-                folder.setParents(Arrays.asList(new ParentReference().setId(parent_id)));
+        if (parent_id != null)
+            folder.setParents(Arrays.asList(new ParentReference().setId(parent_id)));
 
-            return service.files().insert(folder).execute();
-        } catch (IOException e) {
-            return null;
-        }
+        return service.files().insert(folder).execute();
     }
 
     public static File CreateFile(String title, String parent_id) {
@@ -45,11 +41,11 @@ public class GoogleDriveHelper {
         return file;
     }
 
-    public static File GetFolder(Drive service, String title) {
+    public static File GetFolder(Drive service, String title) throws IOException {
         return GetFolder(service, title, null);
     }
 
-    public static File GetFolder(Drive service, String title, String parent_id) {
+    public static File GetFolder(Drive service, String title, String parent_id) throws IOException {
         String query = "";
 
         if (parent_id == null)
@@ -57,68 +53,50 @@ public class GoogleDriveHelper {
         else
             query = "mimeType='application/vnd.google-apps.folder' AND trashed=false AND title='" + title + "' AND '" + parent_id + "' in parents";
 
-        try {
-            FileList files = service.files()
-                    .list()
-                    .setQ(query)
-                    .execute();
+        FileList files = service.files()
+                .list()
+                .setQ(query)
+                .execute();
 
-            return files.getItems().get(0);
-        } catch (IOException e) {
-            return null;
-        }
+        return files.getItems().get(0);
     }
 
-    public static File GetFile(Drive service, String title, String parent_id) {
-        try {
-            FileList files = service.files()
-                    .list()
-                    .setQ("trashed=false AND title='" + title + "' AND '" + parent_id + "' in parents")
-                    .execute();
+    public static File GetFile(Drive service, String title, String parent_id) throws IOException {
+        FileList files = service.files()
+                .list()
+                .setQ("trashed=false AND title='" + title + "' AND '" + parent_id + "' in parents")
+                .execute();
 
-            return files.getItems().get(0);
-        } catch (IOException e) {
-            return null;
-        }
+        return files.getItems().get(0);
     }
 
-    public static FileContent GetTempFileContent(String content) {
-        try {
-            java.io.File tempFile = java.io.File.createTempFile("tempfile", "txt");
+    public static FileContent GetTempFileContent(String content) throws IOException {
+        java.io.File tempFile = java.io.File.createTempFile("tempfile", "txt");
 
-            String tempPath = tempFile.getAbsolutePath();
+        String tempPath = tempFile.getAbsolutePath();
 
-            BufferedWriter bw = new BufferedWriter(new FileWriter(tempPath));
-            bw.write(content);
-            bw.close();
+        BufferedWriter bw = new BufferedWriter(new FileWriter(tempPath));
+        bw.write(content);
+        bw.close();
 
-            FileContent mediaContent = new FileContent("text/plain", tempFile);
+        FileContent mediaContent = new FileContent("text/plain", tempFile);
 
-            return mediaContent;
-        } catch (IOException e) {
-            return null;
-        }
+        return mediaContent;
     }
 
-    public static boolean UploadPhotoToGoogleDrive(Drive service, WorkPhoto workPhoto, String folder_id, MediaHttpUploaderProgressListener mediaHttpUploaderProgressListener) {
-        try {
-            java.io.File mediaFile = new java.io.File(workPhoto.path);
-            InputStreamContent mediaContent =
-                    new InputStreamContent("image/jpeg",
-                            new BufferedInputStream(new FileInputStream(mediaFile)));
-            mediaContent.setLength(mediaFile.length());
+    public static void UploadPhotoToGoogleDrive(Drive service, WorkPhoto workPhoto, String folder_id, MediaHttpUploaderProgressListener mediaHttpUploaderProgressListener) throws IOException {
+        java.io.File mediaFile = new java.io.File(workPhoto.path);
+        InputStreamContent mediaContent =
+                new InputStreamContent("image/jpeg",
+                        new BufferedInputStream(new FileInputStream(mediaFile)));
+        mediaContent.setLength(mediaFile.length());
 
-            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-            fileMetadata.setTitle(workPhoto.name);
-            fileMetadata.setParents(Arrays.asList(new ParentReference().setId(folder_id)));
+        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+        fileMetadata.setTitle(workPhoto.name);
+        fileMetadata.setParents(Arrays.asList(new ParentReference().setId(folder_id)));
 
-            Drive.Files.Insert request = service.files().insert(fileMetadata, mediaContent);
-            request.getMediaHttpUploader().setProgressListener(mediaHttpUploaderProgressListener);
-            request.execute();
-
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        Drive.Files.Insert request = service.files().insert(fileMetadata, mediaContent);
+        request.getMediaHttpUploader().setProgressListener(mediaHttpUploaderProgressListener);
+        request.execute();
     }
 }

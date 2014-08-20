@@ -214,7 +214,7 @@ public class WorkItemActivity extends Activity {
                                 }
                             }
                             ShowToast(getString(R.string.success_upload));
-                        } catch (Exception e) {
+                        } catch (IOException e) {
                             ShowToast(getString(R.string.error_upload));
                         } finally {
                             _progressDialog.dismiss();
@@ -243,7 +243,7 @@ public class WorkItemActivity extends Activity {
                                 }
                             }
                             ShowToast(getString(R.string.success_upload));
-                        } catch (Exception e) {
+                        } catch (IOException e) {
                             ShowToast(getString(R.string.error_upload));
                         } finally {
                             _progressDialog.dismiss();
