@@ -21,16 +21,21 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    compile 'com.android.support:support-v4:19.+'
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    compile 'com.android.support:support-v13:19.+'
     compile 'com.google.android.gms:play-services:5.0.77'
+    compile 'com.android.support:support-v4:19.+'
+    compile 'com.android.support:support-v13:19.+'
+    compile 'com.google.api-client:google-api-client:1.18.0-rc'
+    compile files('src/lib/google-api-client-1.18.0-rc.jar')
+    compile files('src/lib/google-api-client-android-1.18.0-rc.jar')
+    compile files('src/lib/google-api-services-drive-v2-rev137-1.19.0.jar')
+    compile files('src/lib/google-http-client-1.18.0-rc.jar')
+    compile files('src/lib/google-http-client-android-1.18.0-rc.jar')
+    compile files('src/lib/google-oauth-client-1.18.0-rc.jar')
+    compile files('src/lib/gson-2.1.jar')
+    compile files('src/lib/jackson-core-2.1.3.jar')
+    compile files('src/lib/jackson-core-asl-1.9.11.jar')
+    compile files('src/lib/jsr305-1.3.9.jar')
+    compile files('src/lib/protobuf-java-2.4.1.jar')
+    compile files('src/lib/google-api-client-gson-1.18.0-rc.jar')
+    compile files('src/lib/google-http-client-gson-1.18.0-rc.jar')
 }

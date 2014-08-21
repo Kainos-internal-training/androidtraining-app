@@ -1,5 +1,6 @@
 package com.example.dawidr.androidtestproject.Database.Dao;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
@@ -16,7 +17,7 @@ public class WorkPhotoDao {
 
     private static final String INSERT =
             "insert into " + WorkPhotoTable.TABLE_NAME + "(" + WorkPhotoColumns.WORK_ITEM_ID + ", "
-                    + WorkPhotoColumns.PATH + ") values (?, ?)";
+                    + WorkPhotoColumns.PATH + ", " + WorkPhotoColumns.NAME + ", " + WorkPhotoColumns.IS_UPLOADED + ") values (?, ?, ?, ?)";
 
     private final SQLiteDatabase db;
     private final SQLiteStatement insertStatement;
@@ -30,7 +31,18 @@ public class WorkPhotoDao {
         insertStatement.clearBindings();
         insertStatement.bindLong(1, work_item_id);
         insertStatement.bindString(2, entity.path);
+        insertStatement.bindString(3, entity.name);
+        insertStatement.bindLong(4, entity.is_uploaded ? 1 : 0);
         return insertStatement.executeInsert();
+    }
+
+    public void update(WorkPhoto entity) {
+        final ContentValues values = new ContentValues();
+        values.put(WorkPhotoColumns.PATH, entity.path);
+        values.put(WorkPhotoColumns.NAME, entity.name);
+        values.put(WorkPhotoColumns.IS_UPLOADED, entity.is_uploaded ? 1 : 0);
+        db.update(WorkPhotoTable.TABLE_NAME, values, BaseColumns._ID + " = ?", new String[]{String
+                .valueOf(entity.id)});
     }
 
     public void deleteAll(long work_item_id) {
@@ -40,7 +52,7 @@ public class WorkPhotoDao {
     public List<WorkPhoto> getWorkPhotos(long work_item_id) {
         List<WorkPhoto> list = new ArrayList<WorkPhoto>();
         String sql =
-                "select " + BaseColumns._ID + ", " + WorkPhotoColumns.PATH + " from "
+                "select " + BaseColumns._ID + ", " + WorkPhotoColumns.PATH + ", " + WorkPhotoColumns.NAME + ", " + WorkPhotoColumns.IS_UPLOADED + " from "
                         + WorkPhotoTable.TABLE_NAME + " where "
                         + WorkPhotoColumns.WORK_ITEM_ID + " = ?";
         Cursor c = db.rawQuery(sql, new String[]{String.valueOf(work_item_id)});
@@ -49,6 +61,8 @@ public class WorkPhotoDao {
                 WorkPhoto entity = new WorkPhoto();
                 entity.id = c.getLong(0);
                 entity.path = c.getString(1);
+                entity.name = c.getString(2);
+                entity.is_uploaded = c.getLong(3) == 0 ? false : true;
 
                 list.add(entity);
             } while (c.moveToNext());

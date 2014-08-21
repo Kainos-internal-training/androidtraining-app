@@ -55,40 +55,38 @@ public class DataManager {
     }
 
     public WorkItem getWorkItem(long id) {
-        return workItemDao.get(id);
+        WorkItem workItem = workItemDao.get(id);
+        workItem.photos = workPhotoDao.getWorkPhotos(id);
+        return workItem;
     }
 
     public List<WorkItem> getWorkItems() {
-
         List<WorkItem> list = workItemDao.getAll();
         for (WorkItem w : list) {
             w.photos = workPhotoDao.getWorkPhotos(w.id);
         }
-
         return list;
     }
 
     public long insertWorkItem(WorkItem entity) {
 
-        long work_item_id = 0L;
-
         try {
             db.beginTransaction();
 
-            work_item_id = workItemDao.save(entity);
+            entity.id = workItemDao.save(entity);
 
             for (WorkPhoto w : entity.photos) {
-                workPhotoDao.save(w, work_item_id);
+                w.id = workPhotoDao.save(w, entity.id);
             }
 
             db.setTransactionSuccessful();
         } catch (SQLException e) {
-            work_item_id = 0L;
+            entity.id = 0L;
         } finally {
             db.endTransaction();
         }
 
-        return work_item_id;
+        return entity.id;
     }
 
     public void updateWorkItem(WorkItem entity) {
@@ -96,10 +94,9 @@ public class DataManager {
         try {
             db.beginTransaction();
 
-            workPhotoDao.deleteAll(entity.id);
-
             for (WorkPhoto w : entity.photos) {
-                workPhotoDao.save(w, entity.id);
+                if (!w.is_uploaded)
+                    w.id = workPhotoDao.save(w, entity.id);
             }
 
             workItemDao.update(entity);
@@ -118,4 +115,7 @@ public class DataManager {
         workItemDao.delete(entity);
     }
 
+    public void updateWorkPhoto(WorkPhoto entity) {
+        workPhotoDao.update(entity);
+    }
 }
